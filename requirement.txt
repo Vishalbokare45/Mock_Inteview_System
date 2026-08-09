@@ -1,0 +1,63 @@
+# ==========================
+# LLM
+# ==========================
+langchain
+langchain-core
+langchain-community
+langchain-groq
+
+# ==========================
+# Vector Database
+# ==========================
+chromadb
+
+# ==========================
+# Embeddings
+# ==========================
+sentence-transformers
+langchain-huggingface
+
+# ==========================
+# PDF Processing
+# ==========================
+pymupdf
+pypdf
+
+# ==========================
+# Environment Variables
+# ==========================
+python-dotenv
+
+# ==========================
+# Tokenization
+# ==========================
+tiktoken
+
+# ==========================
+# Data Validation
+# ==========================
+pydantic
+
+# ==========================
+# Utilities
+# ==========================
+numpy
+pandas
+
+# ==========================
+# API Backend
+# ==========================
+fastapi
+uvicorn
+
+
+# ==========================
+# Progress Bar
+# ==========================
+tqdm
+
+# ==========================
+# JSON Parsing
+# ==========================
+orjson
+
