@@ -1,10 +1,20 @@
+# Virtual environments
 myenv/
-.venv/
 venv/
+.venv/
 
+# Python
 __pycache__/
 *.pyc
 
+# Environment variables / API keys
 .env
 
+# VS Code
 .vscode/
+
+# Generated vector database
+vector_db/
+
+# Audio files
+*.wav
