@@ -1,7 +1,5 @@
-import os
 import uuid
 from dataclasses import dataclass
-from pathlib import Path
 
 from knowledge.knowledge_unit import KnowledgeUnitGenerator
 from interview.evaluator import AnswerEvaluator
@@ -15,6 +13,7 @@ from vectorstore.chromadb import ChromaVectorStore
 @dataclass
 class InterviewSession:
     interview_id: str
+    user_id: str
     filename: str
     knowledge_units: list
     retriever: object
@@ -31,7 +30,15 @@ class InterviewService:
         self.resume_extractor = ResumeExtractor()
         self.knowledge_generator = KnowledgeUnitGenerator()
 
-    def create_session(self, pdf_path: str, filename: str) -> InterviewSession:
+    def create_session(
+        self,
+        pdf_path: str,
+        filename: str,
+        user_id: str,
+        interview_id: str | None = None,
+    ) -> InterviewSession:
+        # This is the expensive AI/RAG preparation stage. It runs when the
+        # user uploads the resume, so clicking Start Interview is fast.
         resume_text = ResumeLoader(pdf_path).load_resume()
         resume_json = self.resume_extractor.extract(resume_text)
         knowledge_units = self.knowledge_generator.generate(resume_json)
@@ -45,7 +52,8 @@ class InterviewService:
             raise ValueError("No interview topics could be generated from the resume.")
 
         session = InterviewSession(
-            interview_id=str(uuid.uuid4()),
+            interview_id=interview_id or str(uuid.uuid4()),
+            user_id=user_id,
             filename=filename,
             knowledge_units=knowledge_units,
             retriever=retriever,
@@ -63,14 +71,16 @@ class InterviewService:
             raise KeyError("Interview session not found")
         return session
 
-    def start(self, interview_id: str) -> tuple[str, str, str]:
+    def start(self, interview_id: str, user_id: str) -> tuple[str, str, str]:
         session = self.get_session(interview_id)
+        self._check_owner(session, user_id)
         self._set_current_topic(session)
         question = self._generate_question(session)
         return session.state.current_topic, session.state.current_difficulty, question
 
-    def answer(self, interview_id: str, question: str, answer: str) -> dict:
+    def answer(self, interview_id: str, user_id: str, question: str, answer: str) -> dict:
         session = self.get_session(interview_id)
+        self._check_owner(session, user_id)
         state = session.state
         docs = session.retriever.invoke(state.current_topic)
         result = session.evaluator.evaluate(
@@ -114,6 +124,11 @@ class InterviewService:
         session.state.set_topic(topic)
         session.state.set_difficulty("Easy")
         session.state.reset_attempts()
+
+    @staticmethod
+    def _check_owner(session: InterviewSession, user_id: str) -> None:
+        if session.user_id != user_id:
+            raise PermissionError("You do not own this interview")
 
     def _next_action(self, session: InterviewSession, result: dict) -> str:
         score = result["score"]
